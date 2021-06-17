@@ -170,15 +170,17 @@ class CrossASR:
         print()
 
     def printStatistic(self) :
-        f = self.get_outputfile_for_failed_test_case()
-        data = crossasr.utils.read_json(f)
         print()
         print("Number of Failed Test Case Found")
-        for k, v in data["number_of_failed_test_cases_per_asr"].items() :
-            print(f"\t{k}: {v[-1]}")
-        print(f"\tTotal: {data['number_of_failed_test_cases_all'][-1]}")
-        print()
+        for i, res in enumerate(self.result["number_of_failed_test_cases_per_asr"]) :
+            print("Iteration: ", i)
+            for k, v in res.items():
+                print(f"\t{k}: {v}")
 
+        # for k, v in self.result["number_of_failed_test_cases_per_asr"].items() :
+        #     print(f"\t{k}: {v[-1]}")
+        # print(f"\tTotal: {self.result['number_of_failed_test_cases_all'][-1]}")
+        print()
 
     def processText(self, text: str, filename: str) :
         """
@@ -269,7 +271,8 @@ class CrossASR:
         # print(f"Execution time: {execution_time}")
         return cases, execution_time
 
-    def processOneIteration(self, curr_texts: [Text], processed_texts: [Text], cases):
+
+    def processTextBatch(self, curr_texts: [Text], processed_texts: [Text], cases):
         start_time = time.time()
         curr_cases = []
         
@@ -302,6 +305,76 @@ class CrossASR:
 
         return curr_cases, curr_processed_texts, unprocessed_texts
 
+    def setCorpus(self, texts: [Text]) :
+        self.corpus = texts
+        self.initiateVariables()
+
+    
+    def initiateVariables(self) :
+        self.remaining_texts = self.corpus
+        self.processed_texts = []
+        self.cases = []
+        # self.num_failed_test_cases = []
+        # self.num_failed_test_cases_per_asr = {}
+        # for asr in self.asrs:
+        #     self.num_failed_test_cases_per_asr[asr.getName()] = []
+        
+        self.num_failed_test_cases_per_asr = []
+        
+        self.result = {}
+
+
+    def runOneIteration(self) :
+        if self.text_batch_size:
+            curr_texts = self.remaining_texts[:self.text_batch_size]
+            self.remaining_texts = self.remaining_texts[self.text_batch_size:]
+        else:  # use global visibility
+            curr_texts = self.remaining_texts
+
+        if len(curr_texts) > 0:
+
+            curr_cases, curr_processsed_texts, unprocessed_texts = self.processTextBatch(
+                curr_texts, self.processed_texts, self.cases)
+            self.cases.extend(curr_cases)
+            self.processed_texts.extend(curr_processsed_texts)
+            if self.text_batch_size:
+                self.remaining_texts.extend(unprocessed_texts)
+            else:
+                self.remaining_texts = unprocessed_texts
+
+            # self.num_failed_test_cases.append(
+            #     calculate_cases(self.cases, mode=FAILED_TEST_CASE))
+            self.num_failed_test_cases_per_asr.append({})
+            for asr in self.asrs:
+                self.num_failed_test_cases_per_asr[-1][asr.getName()] = calculate_cases_per_asr(
+                    self.cases, mode=FAILED_TEST_CASE, asr_name=asr.getName())
+            
+            # shuffle the remaining texts
+            np.random.shuffle(self.remaining_texts)
+
+            # self.result["number_of_failed_test_cases_all"] = self.num_failed_test_cases
+            self.result["number_of_failed_test_cases_per_asr"] = self.num_failed_test_cases_per_asr
+        else:
+            print("Texts are not enough!")
+
+    
+    def runAllIterations(self) :
+
+        for i in range(self.num_iteration):
+            # print(f"Iteration: {i+1}")
+            self.runOneIteration()
+
+        self.saveStatistic()
+
+        if self.target_asr:
+            self.saveFailedTestCases(self.processed_texts, self.cases)
+
+
+    def saveStatistic(self) :
+        with open(self.outputfile_failed_test_case, 'w') as outfile:
+            json.dump(self.result, outfile, indent=2, sort_keys=True)
+
+
     def processCorpus(self, texts: [Text]):
         """
         Run CrossASR on a corpus
@@ -330,7 +403,7 @@ class CrossASR:
 
             if len(curr_texts) > 0 :
                 
-                curr_cases, curr_processsed_texts, unprocessed_texts = self.processOneIteration(curr_texts, processed_texts, cases)
+                curr_cases, curr_processsed_texts, unprocessed_texts = self.processTextBatch(curr_texts, processed_texts, cases)
                 cases.extend(curr_cases)
                 processed_texts.extend(curr_processsed_texts)
                 if self.text_batch_size :
