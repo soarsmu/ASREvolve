@@ -129,6 +129,18 @@ def deepspeechRecognizeAudio(audio_fpath):
     return transcription
 
 
+def finetunedDeepspeechRecognizeAudio(audio_fpath):
+    cmd = "deepspeech --model asr_models/finetuned_deepspeech/output_graph.pb --scorer asr_models/deepspeech/deepspeech-0.9.3-models.scorer --audio " + audio_fpath
+
+    proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+    (out, _) = proc.communicate()
+
+    transcription = out.decode("utf-8")[:-1]
+
+    # print("DeepSpeech transcription: %s" % transcription)
+    return transcription
+
+
 def deepspeech2RecognizeAudio(audio_fpath) :
     cmd = "docker exec -it deepspeech2 curl http://localhost:5000/transcribe?fpath=" + audio_fpath
 
