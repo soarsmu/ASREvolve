@@ -1,5 +1,6 @@
 import os, time, random
 import numpy as np
+import pandas as pd
 import json
 
 import crossasr.constant
@@ -39,6 +40,7 @@ class CrossASR:
         self.text_batch_size = text_batch_size
         self.estimator = estimator
         self.outputfile_failed_test_case = self.get_outputfile_for_failed_test_case()
+        self.valid_data = None
 
         if seed :
             crossasr.utils.set_seed(seed)
@@ -220,7 +222,7 @@ class CrossASR:
             time_for_recognizing_audio_fpath = os.path.join(
                 directory, filename + ".txt")
 
-            if self.recompute :
+            if self.recompute or not os.path.exists(time_for_recognizing_audio_fpath):
                 start_time = time.time()
                 # TODO:  
                 # change recognize audio -> input audio instead of fpath
@@ -357,7 +359,24 @@ class CrossASR:
         else:
             print("Texts are not enough!")
 
+    def gatherValidTestCases(self) :
+        wav_filenames = []
+        transcripts = []
+        input_texts = self.get_text_only(self.processed_texts)
+        ids = self.get_id_only(self.processed_texts)
+        source_audio_dir = os.path.join(self.audio_dir, self.tts.getName())
+        for input_text, filename, case in zip(input_texts, ids, self.cases):
+            if case[self.target_asr] != INDETERMINABLE_TEST_CASE: # either failed test cases or succesfull test cases
+                src_audio_fpath = "/" + source_audio_dir + f"/{filename}.wav"
+                wav_filenames.append(src_audio_fpath)
+                transcripts.append(input_text)
+
+        self.valid_data = pd.DataFrame(data={"wav_filename": wav_filenames, "transcript": transcripts})
     
+    def getValidData(self):
+        return self.valid_data
+
+        
     def runAllIterations(self) :
 
         for i in range(self.num_iteration):
