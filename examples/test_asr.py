@@ -27,23 +27,31 @@ if __name__ == "__main__":
     corpus_fpath = os.path.join(config["output_dir"], config["corpus_fpath"])
     texts = utils.readCorpus(corpus_fpath=corpus_fpath)
     crossasr.setCorpus(texts=texts)
+    
     crossasr.runAllIterations()
+    crossasr.printStatistic()
+    
     # crossasr.runOneIteration()
     # crossasr.printStatistic()
-
     # crossasr.removeASR("deepspeech")
     # new_asr = Wav2Vec2()
     # crossasr.addASR(new_asr)
-    # # TODO:
-    # # retrain DeepSpeech, exchange deepspeech
-
-    # Retrain Deepspeech
-    # prepare folder containing audio files and transcriptions
-    # prepare train and test csv
-    # update train csv for each iteration
-
     # crossasr.runOneIteration()
-    crossasr.printStatistic()
+    # crossasr.printStatistic()
+    
+    # TODO:
+    # prepare folder containing audio files and transcriptions
+    # mount the folder in the source code for retraining Deepspeech
+    #   (loop for each iteration)
+    #   run crossasr for 1 iteration
+    #   save audio files and transcription in the mounted folder
+    #   prepare train and test csv, where the test test is fix for each iteration
+    #   update train csv for each iteration
+    #   train deepspeech
+    #   exchange deepspeech with the fine-tuned model
+    #   save the WER from fine-tuned model
+    #   (until a number of iterations is already performed)
 
+    
 
     
