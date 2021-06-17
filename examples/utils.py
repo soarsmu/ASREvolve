@@ -35,8 +35,9 @@ from wit import Wit as WitAPI
 WIT_ACCESS_TOKEN = os.getenv("WIT_ACCESS_TOKEN")
 wit_client = WitAPI(WIT_ACCESS_TOKEN)
 
-tokenizer = Wav2Vec2Tokenizer.from_pretrained("facebook/wav2vec2-base-960h")
-model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h")
+wav2vec_tokenizer = Wav2Vec2Tokenizer.from_pretrained(
+    "facebook/wav2vec2-base-960h")
+wav2vec_model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h")
 
 
 def getTTS(tts_name: str):
@@ -172,13 +173,13 @@ def wav2vec2RecognizeAudio(audio_fpath) :
     audio_input, _ = sf.read(audio_fpath)
 
     # transcribe
-    input_values = tokenizer(
+    input_values = wav2vec_tokenizer(
         audio_input, return_tensors="pt").input_values
     # input_values = input_values.to(self.device)
 
-    logits = model(input_values).logits
+    logits = wav2vec_model(input_values).logits
     predicted_ids = torch.argmax(logits, dim=-1)
-    transcription = tokenizer.batch_decode(predicted_ids)[0]
+    transcription = wav2vec_tokenizer.batch_decode(predicted_ids)[0]
     
     del audio_input, input_values, logits, predicted_ids
     torch.cuda.empty_cache()
