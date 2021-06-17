@@ -4,16 +4,31 @@ from numpy.core.numeric import cross
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-import os, sys
+import os, sys, subprocess
 from crossasr import CrossASR
 import json
 import utils
 
 
 from asr.wav2vec2 import Wav2Vec2
+from asr.finetuned_deepspeech import FinetunedDeepSpeech
+
+
+def trainDeepSpeech(f, mode="first"):
+    cmd = f"docker exec -it gpu0-deepspeech sh -c 'cd DeepSpeech ; bash fine_tune/{mode}.sh' "
+
+    proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+
+    output = out.decode("utf-8").split("\n")
+    for o in output:
+        print(o)
+        f.write(o + "\n")
 
 
 if __name__ == "__main__":
+
+    f = open("log.txt", "w+")
 
     config = utils.readJson(sys.argv[1]) # read json configuration file
 
@@ -28,8 +43,8 @@ if __name__ == "__main__":
     texts = utils.readCorpus(corpus_fpath=corpus_fpath)
     crossasr.setCorpus(texts=texts)
     
-    crossasr.runAllIterations()
-    crossasr.printStatistic()
+    # crossasr.runAllIterations()
+    # crossasr.printStatistic()
     
     # crossasr.runOneIteration()
     # crossasr.printStatistic()
@@ -51,6 +66,45 @@ if __name__ == "__main__":
     #   exchange deepspeech with the fine-tuned model
     #   save the WER from fine-tuned model
     #   (until a number of iterations is already performed)
+
+    crossasr.runOneIteration()
+    crossasr.gatherValidTestCases()
+    valid_data = crossasr.getValidData()
+    test = valid_data.sample(frac=0.50)
+    train = valid_data.drop(test.index)
+    fine_tune_data_dir = os.path.join(config["output_dir"], "fine_tune_data")
+    if not os.path.exists(fine_tune_data_dir) : os.makedirs(fine_tune_data_dir)
+    test_path = os.path.join(fine_tune_data_dir, "test.csv")
+    train_path = os.path.join(fine_tune_data_dir, "train.csv")
+    test.to_csv(test_path, index=False)
+    train.to_csv(train_path, index=False)
+    trainDeepSpeech(f, "first")
+
+    crossasr.removeASR("deepspeech")
+    crossasr.addASR(FinetunedDeepSpeech())
+    crossasr.setTargetASR("finetuned_deepspeech")
+    crossasr.deleteASRTranscriptions("finetuned_deepspeech")
+    
+    for i in range(5) :
+        print("XXXXX")
+        print("XXXXX")
+        print("XXXXX")
+        print(f"ITERATION: {i}")
+        f.write("XXX\n")
+        f.write("XXX\n")
+        f.write("XXX\n")
+        f.write(f"ITERATION: {i}\n")
+        crossasr.runOneIteration()
+        crossasr.gatherValidTestCases()
+        valid_data = crossasr.getValidData()
+        train = valid_data.drop(test.index)
+        test.to_csv(test_path, index=False)
+        train.to_csv(train_path, index=False)
+        trainDeepSpeech(f, "subsequent")
+
+    f.close()
+    # print(valid_data)
+
 
     
 
