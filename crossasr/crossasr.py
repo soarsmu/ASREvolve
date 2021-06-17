@@ -99,6 +99,12 @@ class CrossASR:
                 break
         del self.asrs[i]
 
+    def getTargetASR(self):
+        return self.target_asr
+    
+    def setTargetASR(self, target_asr):
+        self.target_asr = target_asr
+
     def getOutputDir(self):
         return self.audio_dir
 
@@ -374,7 +380,7 @@ class CrossASR:
         ids = self.get_id_only(self.processed_texts)
         source_audio_dir = os.path.join(self.audio_dir, self.tts.getName())
         for input_text, filename, case in zip(input_texts, ids, self.cases):
-            if case[self.target_asr] != INDETERMINABLE_TEST_CASE: # either failed test cases or succesfull test cases
+            if list(case.values())[0] != INDETERMINABLE_TEST_CASE: # either failed test cases or succesfull test cases
                 src_audio_fpath = "/" + source_audio_dir + f"/{filename}.wav"
                 wav_filenames.append(src_audio_fpath)
                 transcripts.append(input_text)
