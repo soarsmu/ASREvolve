@@ -1,4 +1,5 @@
 import os, time, random
+import shutil
 import numpy as np
 import pandas as pd
 import json
@@ -54,6 +55,14 @@ class CrossASR:
         # init directory for save the transcription
         for asr in self.asrs :
             make_dir(os.path.join(self.transcription_dir, self.tts.getName(), asr.getName()))
+
+
+    def deleteASRTranscriptions(self, asr_name):
+        asr_dir = os.path.join(self.transcription_dir,
+                               self.tts.getName(), asr_name)
+        
+        shutil.rmtree(asr_dir)
+        make_dir(asr_dir)
 
     def get_outputfile_for_failed_test_case(self) :
         asrs_dir = "_".join([asr.getName() for asr in self.asrs])
@@ -156,8 +165,10 @@ class CrossASR:
         for asr in self.asrs :
             transcription_dir = os.path.join(
                 self.transcription_dir, self.getTTS().getName())
-            transcription = asr.loadTranscription(
+            transcription_path = asr.generateTranscriptionPath(
                 transcription_dir=transcription_dir, filename=filename)
+            transcription = asr.loadTranscription(
+                transcription_path=transcription_path)
             print(f"\t {asr.getName()}: {preprocess_text(transcription)}")
         print()
         print(f"Cases: ")
@@ -221,31 +232,28 @@ class CrossASR:
             make_dir(directory)
             time_for_recognizing_audio_fpath = os.path.join(
                 directory, filename + ".txt")
-
-            if self.recompute or not os.path.exists(time_for_recognizing_audio_fpath):
+            
+            transcription_path = asr.generateTranscriptionPath(
+                transcription_dir=transcription_dir, filename=filename)
+            if self.recompute or not os.path.exists(transcription_path):
                 start_time = time.time()
-                # TODO:  
-                # change recognize audio -> input audio instead of fpath
-                # audio = asr.loadAudio(audio_fpath=audio_fpath)
-                # transcription = asr.recognizeAudio(audio=audio)
-                # asr.saveTranscription(transcription_fpath, transcription)
                 transcription = asr.recognizeAudio(audio_fpath=audio_fpath)
                 asr.setTranscription(transcription)
-                asr.saveTranscription(transcription_dir=transcription_dir, filename=filename)
+                asr.saveTranscription(transcription_path=transcription_path)
                 save_execution_time(fpath=time_for_recognizing_audio_fpath, execution_time=time.time() - start_time)
             
             transcription = asr.loadTranscription(
-                transcription_dir=transcription_dir, filename=filename)
+                transcription_path=transcription_path)
             num_retry = 0
             while transcription == "" and num_retry < self.max_num_retry :
                 start_time = time.time()
                 asr.recognizeAudio(audio_fpath=audio_fpath)
                 asr.saveTranscription(
-                    transcription_dir=transcription_dir, filename=filename)
+                    transcription_path=transcription_path)
                 save_execution_time(
                     fpath=time_for_recognizing_audio_fpath, execution_time=time.time() - start_time)
                 transcription = asr.loadTranscription(
-                    transcription_dir=transcription_dir, filename=filename)
+                    transcription_path=transcription_path)
 
                 if asr.getName() == "wit" :
                     random_number = float(random.randint(9, 47))/10.

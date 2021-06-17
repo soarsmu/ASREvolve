@@ -21,17 +21,18 @@ class ASR:
     def recognizeAudio(self, audio_fpath: str) -> str:
         # abstract function need to be implemented by the child class
         raise NotImplementedError()
-    
-    def saveTranscription(self, transcription_dir: str, filename: str):
+
+    def generateTranscriptionPath(self, transcription_dir: str, filename: str):
         transcription_dir = os.path.join(transcription_dir, self.getName())
         make_dir(transcription_dir)
         transcription_path = os.path.join(transcription_dir, filename + ".txt")
-        with open(transcription_path, "w+") as f :
+        return transcription_path
+
+    def saveTranscription(self, transcription_path: str):
+        with open(transcription_path, "w+") as f:
             f.write(self.getTranscription())
     
-    def loadTranscription(self, transcription_dir: str, filename: str):
-        transcription_dir = os.path.join(transcription_dir, self.getName())
-        transcription_path = os.path.join(transcription_dir, filename + ".txt")
+    def loadTranscription(self, transcription_path: str):
         f = open(transcription_path, "r") 
         lines = f.readlines()
         if len(lines) == 0 : return ""
