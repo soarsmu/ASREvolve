@@ -27,8 +27,6 @@ def trainDeepSpeech(mode="first"):
 
 if __name__ == "__main__":
 
-    
-
     config = utils.readJson(sys.argv[1]) # read json configuration file
 
     tts = utils.getTTS(config["tts"])
@@ -38,20 +36,22 @@ if __name__ == "__main__":
 
     crossasr = CrossASR(tts=tts, asrs=asrs, estimator=estimator, **utils.parseConfig(config))
     
-    corpus_fpath = os.path.join(config["output_dir"], config["corpus_fpath"])
-    texts = utils.readCorpus(corpus_fpath=corpus_fpath)
-    crossasr.setCorpus(texts=texts)
-    
-    crossasr.runOneIteration()
+    processed_text_fpath = os.path.join(
+        config["output_dir"], "crossasr_processed_texts.json")
+    crossasr.loadSavedData(fpath=processed_text_fpath)
+
+    crossasr.runOneIterationUsingSavedData()
     crossasr.gatherValidTestCases()
     valid_data = crossasr.getValidData()
-    train = valid_data.copy() ## we use all data for finetuning
-    test = valid_data.sample(frac=0.50)
-    # train = valid_data.drop(test.index)
+    train = valid_data.copy() # use all data for fine tuning
+    test = valid_data.sample(frac=0.10)
+    
     fine_tune_data_dir = os.path.join(config["output_dir"], "fine_tune_data")
-    if not os.path.exists(fine_tune_data_dir) : os.makedirs(fine_tune_data_dir)
+    if not os.path.exists(fine_tune_data_dir):
+        os.makedirs(fine_tune_data_dir)
     test_path = os.path.join(fine_tune_data_dir, "test.csv")
-    train_path = os.path.join(fine_tune_data_dir, "train.csv")
+    train_path = os.path.join(fine_tune_data_dir, "train.csv")    
+    
     test.to_csv(test_path, index=False)
     train.to_csv(train_path, index=False)
     trainDeepSpeech("first")
@@ -62,11 +62,9 @@ if __name__ == "__main__":
     crossasr.deleteASRTranscriptions("finetuned_deepspeech")
     
     for i in range(1, config["num_iteration"]) :
-        crossasr.runOneIteration()
+        crossasr.runOneIterationUsingSavedData()
         crossasr.gatherValidTestCases()
         valid_data = crossasr.getValidData()
-        train = valid_data.drop(test.index)
-        test.to_csv(test_path, index=False)
         train.to_csv(train_path, index=False)
         trainDeepSpeech("subsequent")
 
