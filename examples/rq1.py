@@ -9,8 +9,6 @@ from crossasr import CrossASR
 import json
 import utils
 
-
-from asr.wav2vec2 import Wav2Vec2
 from asr.finetuned_deepspeech import FinetunedDeepSpeech
 
 
@@ -24,6 +22,11 @@ def trainDeepSpeech(f, mode="first"):
     for o in output:
         print(o)
         f.write(o + "\n")
+
+def substract(df1, df2):
+    test_set = set(df2["wav_filename"])
+    df = df1[df1["wav_filename"].apply(lambda x: x not in test_set)]
+    return df
 
 
 if __name__ == "__main__":
@@ -45,62 +48,44 @@ if __name__ == "__main__":
     texts = utils.readCorpus(corpus_fpath=corpus_fpath)
     crossasr.setCorpus(texts=texts)
     
-    # crossasr.runAllIterations()
-    # crossasr.printStatistic()
-    
-    # crossasr.runOneIteration()
-    # crossasr.printStatistic()
-    # crossasr.removeASR("deepspeech")
-    # new_asr = Wav2Vec2()
-    # crossasr.addASR(new_asr)
-    # crossasr.runOneIteration()
-    # crossasr.printStatistic()
-    
-    # TODO:
-    # prepare folder containing audio files and transcriptions
-    # mount the folder in the source code for retraining Deepspeech
-    #   (loop for each iteration)
-    #   run crossasr for 1 iteration
-    #   save audio files and transcription in the mounted folder
-    #   prepare train and test csv, where the test test is fix for each iteration
-    #   update train csv for each iteration
-    #   train deepspeech
-    #   exchange deepspeech with the fine-tuned model
-    #   save the WER from fine-tuned model
-    #   (until a number of iterations is already performed)
+    crossasr.runOneIteration()
+    crossasr.gatherValidTestCases()
+    valid_data = crossasr.getValidData()
+    test = valid_data.copy()
 
     crossasr.runOneIteration()
     crossasr.gatherValidTestCases()
     valid_data = crossasr.getValidData()
-    test = valid_data.sample(frac=0.50)
-    train = valid_data.drop(test.index)
+    train = substract(valid_data, test)
+
     fine_tune_data_dir = os.path.join(config["output_dir"], "fine_tune_data")
-    if not os.path.exists(fine_tune_data_dir) : os.makedirs(fine_tune_data_dir)
+    if not os.path.exists(fine_tune_data_dir):
+        os.makedirs(fine_tune_data_dir)
     test_path = os.path.join(fine_tune_data_dir, "test.csv")
     train_path = os.path.join(fine_tune_data_dir, "train.csv")
     test.to_csv(test_path, index=False)
     train.to_csv(train_path, index=False)
+
+    # valid_data.to_csv(os.path.join(fine_tune_data_dir, "valid.csv"))
+
     trainDeepSpeech(f, "first")
 
     crossasr.removeASR("deepspeech")
     crossasr.addASR(FinetunedDeepSpeech())
     crossasr.setTargetASR("finetuned_deepspeech")
     crossasr.deleteASRTranscriptions("finetuned_deepspeech")
-    
-    for i in range(1, config["num_iteration"]) :
+
+    for i in range(2, config["num_iteration"]) :
         print(f"ITERATION: {i}")
         f.write(f"ITERATION: {i}\n")
         crossasr.runOneIteration()
         crossasr.gatherValidTestCases()
         valid_data = crossasr.getValidData()
-        train = valid_data.drop(test.index)
-        test.to_csv(test_path, index=False)
+        train = substract(valid_data, test)
         train.to_csv(train_path, index=False)
         trainDeepSpeech(f, "subsequent")
 
     f.close()
-    # print(valid_data)
-
 
     
 
