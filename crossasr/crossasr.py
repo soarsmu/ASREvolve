@@ -322,19 +322,15 @@ class CrossASR:
         return curr_cases, curr_processed_texts, unprocessed_texts
 
     def setCorpus(self, texts: [Text]) :
-        self.corpus = texts
-        self.initiateVariables()
+        self.remaining_texts = texts
 
+        self.initiateVariables()
     
     def initiateVariables(self) :
-        self.remaining_texts = self.corpus
         self.processed_texts = []
         self.processed_text_per_iteration = []
         self.cases = []
-        
-        
         self.num_failed_test_cases_per_asr = []
-        
         self.result = {}
 
 
@@ -357,20 +353,21 @@ class CrossASR:
             else:
                 self.remaining_texts = unprocessed_texts
 
-            # self.num_failed_test_cases.append(
-            #     calculate_cases(self.cases, mode=FAILED_TEST_CASE))
-            self.num_failed_test_cases_per_asr.append({})
-            for asr in self.asrs:
-                self.num_failed_test_cases_per_asr[-1][asr.getName()] = calculate_cases_per_asr(
-                    self.cases, mode=FAILED_TEST_CASE, asr_name=asr.getName())
+            self.calculateFailedTestCase()
             
             # shuffle the remaining texts
             np.random.shuffle(self.remaining_texts)
 
-            # self.result["number_of_failed_test_cases_all"] = self.num_failed_test_cases
-            self.result["number_of_failed_test_cases_per_asr"] = self.num_failed_test_cases_per_asr
         else:
             print("Texts are not enough!")
+
+    def calculateFailedTestCase(self):
+        self.num_failed_test_cases_per_asr.append({})
+        for asr in self.asrs:
+            self.num_failed_test_cases_per_asr[-1][asr.getName()] = calculate_cases_per_asr(
+                self.cases, mode=FAILED_TEST_CASE, asr_name=asr.getName())
+        self.result["number_of_failed_test_cases_per_asr"] = self.num_failed_test_cases_per_asr
+
 
     def gatherValidTestCases(self) :
         wav_filenames = []
@@ -389,19 +386,18 @@ class CrossASR:
     def getValidData(self):
         return self.valid_data
 
-        
     def runAllIterations(self) :
 
         for i in range(self.num_iteration):
             self.runOneIteration()
 
-        # self.saveStatistic()
+        self.saveStatistic()
 
         if self.target_asr:
-            self.saveFailedTestCases(self.processed_texts, self.cases)
-
+            self.saveFailedTestCases(self.processed_texts, self.cases)    
 
     def saveStatistic(self) :
+        print(f"Result is saved at {self.outputfile_failed_test_case}")
         with open(self.outputfile_failed_test_case, 'w+') as outfile:
             json.dump(self.result, outfile, indent=2, sort_keys=True)
 
@@ -415,6 +411,40 @@ class CrossASR:
 
         with open(fpath, "w+") as outfile :
             json.dump(res, outfile, indent=2)
+
+    def runOneIterationUsingSavedData(self):
+        # if there is data that can be processed
+        if self.iteration < len(self.texts) : 
+            
+            # get data for each iteration
+            text_batch = self.texts[self.iteration] 
+            
+            # iterate texts processed in an iteration
+            for text in text_batch : 
+                case, _ = self.processText(
+                    text=text.getText(), filename=f"{text.getId()}")
+                self.cases.append(case)
+                self.processed_texts.append(text)
+        
+            # calculate the number of failed test cases for each iteration
+            self.calculateFailedTestCase()
+        else :
+            print("Data is not sufficient")
+        
+        self.iteration += 1
+
+    def loadSavedData(self, fpath):
+        json_texts = read_json(fpath)
+        self.texts = []
+        for text_batch in json_texts :
+            tb = []
+            for text in text_batch :
+                tb.append(Text(id=text["id"], text=text["text"]))
+            self.texts.append(tb)
+        
+        self.initiateVariables()
+        
+        self.iteration = 0
 
     def saveFailedTestCases(self, processed_texts, cases) :
         failed_test_case_dir = os.path.join(self.output_dir, "failed_test_cases", self.tts.getName(), self.target_asr)
