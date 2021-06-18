@@ -130,7 +130,7 @@ def deepspeechRecognizeAudio(audio_fpath):
 
 
 def finetunedDeepspeechRecognizeAudio(audio_fpath):
-    cmd = "deepspeech --model asr_models/finetuned_deepspeech/output_graph.pb --scorer asr_models/deepspeech/deepspeech-0.9.3-models.scorer --audio " + audio_fpath
+    cmd = "deepspeech --model asr_models/finetuned_deepspeech/output_graph.pbmm --scorer asr_models/deepspeech/deepspeech-0.9.3-models.scorer --audio " + audio_fpath
 
     proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
     (out, _) = proc.communicate()
