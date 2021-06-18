@@ -28,7 +28,7 @@ def trainDeepSpeech(f, mode="first"):
 
 if __name__ == "__main__":
 
-    f = open("log.txt", "w+")
+    
 
     config = utils.readJson(sys.argv[1]) # read json configuration file
 
@@ -38,6 +38,10 @@ if __name__ == "__main__":
     estimator = utils.getEstimator(config["estimator"]) if config["estimator"] else None
 
     crossasr = CrossASR(tts=tts, asrs=asrs, estimator=estimator, **utils.parseConfig(config))
+    log_fpath = crossasr.outputfile_failed_test_case
+    log_fpath = log_fpath.replace(".json", ".txt")
+    print(f"Log is saved at {log_fpath}")
+    f = open(log_fpath, "w+")
 
     corpus_fpath = os.path.join(config["output_dir"], config["corpus_fpath"])
     texts = utils.readCorpus(corpus_fpath=corpus_fpath)
@@ -85,11 +89,11 @@ if __name__ == "__main__":
     crossasr.setTargetASR("finetuned_deepspeech")
     crossasr.deleteASRTranscriptions("finetuned_deepspeech")
     
-    for i in range(5) :
-        print("XXXXX")
-        print("XXXXX")
-        print("XXXXX")
-        print(f"ITERATION: {i}")
+    for i in range(1, config["num_iteration"]) :
+        # print("XXXXX")
+        # print("XXXXX")
+        # print("XXXXX")
+        # print(f"ITERATION: {i}")
         f.write("XXX\n")
         f.write("XXX\n")
         f.write("XXX\n")
@@ -101,6 +105,8 @@ if __name__ == "__main__":
         test.to_csv(test_path, index=False)
         train.to_csv(train_path, index=False)
         trainDeepSpeech(f, "subsequent")
+
+    crossasr.saveStatistic()
 
     f.close()
     # print(valid_data)
