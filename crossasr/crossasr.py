@@ -404,67 +404,10 @@ class CrossASR:
 
 
     def saveStatistic(self) :
-        with open(self.outputfile_failed_test_case, 'w') as outfile:
+        with open(self.outputfile_failed_test_case, 'w+') as outfile:
             json.dump(self.result, outfile, indent=2, sort_keys=True)
 
 
-    def processCorpus(self, texts: [Text]):
-        """
-        Run CrossASR on a corpus
-        given a corpus, which is a list of sentences, the CrossASR generates test cases.
-        :param texts: a list of tuple(sentence, id)
-        """
-        
-        remaining_texts = texts
-        curr_texts = []
-        processed_texts = []
-        cases = []
-        num_failed_test_cases = []
-        num_failed_test_cases_per_asr = {}
-        num_processed_texts = []
-        for asr in self.asrs:
-            num_failed_test_cases_per_asr[asr.getName()] = []
-        
-        for i in range(self.num_iteration):
-            # print(f"Iteration: {i+1}")
-            
-            if self.text_batch_size :
-                curr_texts = remaining_texts[:self.text_batch_size]
-                remaining_texts = remaining_texts[self.text_batch_size:]
-            else : # use global visibility
-                curr_texts = remaining_texts
-
-            if len(curr_texts) > 0 :
-                
-                curr_cases, curr_processsed_texts, unprocessed_texts = self.processTextBatch(curr_texts, processed_texts, cases)
-                cases.extend(curr_cases)
-                processed_texts.extend(curr_processsed_texts)
-                if self.text_batch_size :
-                    remaining_texts.extend(unprocessed_texts)
-                else :
-                    remaining_texts = unprocessed_texts
-
-                num_failed_test_cases.append(calculate_cases(cases, mode=FAILED_TEST_CASE))
-                for asr in self.asrs:
-                    num_failed_test_cases_per_asr[asr.getName()].append(calculate_cases_per_asr(
-                        cases, mode=FAILED_TEST_CASE, asr_name=asr.getName()))
-                num_processed_texts.append(len(processed_texts))
-            else :
-                print("Texts are not enough!")
-            
-            # shuffle the remaining texts
-            np.random.shuffle(remaining_texts)
-        
-        data = {}
-        data["number_of_failed_test_cases_all"] = num_failed_test_cases
-        data["number_of_failed_test_cases_per_asr"] = num_failed_test_cases_per_asr
-        data["number_of_processed_texts"] = num_processed_texts
-        with open(self.outputfile_failed_test_case, 'w') as outfile:
-            json.dump(data, outfile, indent=2, sort_keys=True)
-
-        if self.target_asr :
-            self.saveFailedTestCases(processed_texts, cases)
-    
     def saveFailedTestCases(self, processed_texts, cases) :
         failed_test_case_dir = os.path.join(self.output_dir, "failed_test_cases", self.tts.getName(), self.target_asr)
         make_dir(failed_test_case_dir)
