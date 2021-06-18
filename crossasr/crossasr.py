@@ -329,11 +329,9 @@ class CrossASR:
     def initiateVariables(self) :
         self.remaining_texts = self.corpus
         self.processed_texts = []
+        self.processed_text_per_iteration = []
         self.cases = []
-        # self.num_failed_test_cases = []
-        # self.num_failed_test_cases_per_asr = {}
-        # for asr in self.asrs:
-        #     self.num_failed_test_cases_per_asr[asr.getName()] = []
+        
         
         self.num_failed_test_cases_per_asr = []
         
@@ -352,6 +350,7 @@ class CrossASR:
             curr_cases, curr_processsed_texts, unprocessed_texts = self.processTextBatch(
                 curr_texts, self.processed_texts, self.cases)
             self.cases.extend(curr_cases)
+            self.processed_text_per_iteration.append(curr_processsed_texts)
             self.processed_texts.extend(curr_processsed_texts)
             if self.text_batch_size:
                 self.remaining_texts.extend(unprocessed_texts)
@@ -394,10 +393,9 @@ class CrossASR:
     def runAllIterations(self) :
 
         for i in range(self.num_iteration):
-            # print(f"Iteration: {i+1}")
             self.runOneIteration()
 
-        self.saveStatistic()
+        # self.saveStatistic()
 
         if self.target_asr:
             self.saveFailedTestCases(self.processed_texts, self.cases)
@@ -407,6 +405,16 @@ class CrossASR:
         with open(self.outputfile_failed_test_case, 'w+') as outfile:
             json.dump(self.result, outfile, indent=2, sort_keys=True)
 
+    def saveProcessedTextPerIteration(self, fpath) :
+        res = []
+        for text_batch in self.processed_text_per_iteration :
+            tb = []
+            for text in text_batch :
+                tb.append({"text":text.getText(),"id":text.getId()})
+            res.append(tb)
+
+        with open(fpath, "w+") as outfile :
+            json.dump(res, outfile, indent=2)
 
     def saveFailedTestCases(self, processed_texts, cases) :
         failed_test_case_dir = os.path.join(self.output_dir, "failed_test_cases", self.tts.getName(), self.target_asr)
