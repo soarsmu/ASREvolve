@@ -3,7 +3,7 @@
     "output_dir": "output/europarl-seed2021/",
     "corpus_fpath": "corpus/europarl-20000.txt",
     "tts" : "rv",
-    "asrs" : ["deepspeech", "deepspeech2", "wav2letter", "wit", "wav2vec2"],
+    "asrs" : ["deepspeech", "deepspeech2", "wav2letter", "wit"],
     "target_asr": "deepspeech",
     "recompute": false,
     "time_budget": 3600,

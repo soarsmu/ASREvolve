@@ -9,5 +9,5 @@
     "time_budget": 3600,
     "num_iteration": 5,
     "text_batch_size": 1200,
-    "estimator": "facebook/bart-base"
+    "estimator": null
 }
