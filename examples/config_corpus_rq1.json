@@ -7,7 +7,7 @@
     "target_asr": "deepspeech",
     "recompute": false,
     "time_budget": 3600,
-    "num_iteration": 10,
+    "num_iteration": 6,
     "text_batch_size": 1200,
     "estimator": "facebook/bart-base"
 }

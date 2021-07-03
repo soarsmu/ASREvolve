@@ -41,6 +41,7 @@ class CrossASR:
         self.text_batch_size = text_batch_size
         self.estimator = estimator
         self.outputfile_failed_test_case = self.get_outputfile_for_failed_test_case()
+        self.failed_data = None
         self.valid_data = None
 
         if seed :
@@ -385,6 +386,25 @@ class CrossASR:
     
     def getValidData(self):
         return self.valid_data
+
+    def gatherFailedTestCases(self):
+        wav_filenames = []
+        transcripts = []
+        input_texts = self.get_text_only(self.processed_texts)
+        ids = self.get_id_only(self.processed_texts)
+        source_audio_dir = os.path.join(self.audio_dir, self.tts.getName())
+        for input_text, filename, case in zip(input_texts, ids, self.cases):
+            # failed test cases 
+            if case["deepspeech"] == FAILED_TEST_CASE:
+                src_audio_fpath = "/" + source_audio_dir + f"/{filename}.wav"
+                wav_filenames.append(src_audio_fpath)
+                transcripts.append(input_text)
+
+        self.failed_data = pd.DataFrame(
+            data={"wav_filename": wav_filenames, "transcript": transcripts})
+
+    def getFailedData(self):
+        return self.failed_data
 
     def runAllIterations(self) :
 
