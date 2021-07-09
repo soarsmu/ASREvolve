@@ -139,24 +139,8 @@ cython_debug/
 
 .vscode/
 
-data/
-execution_time/
-
-models/deepspeech/
-models/DeepSpeech/
-!models/DeepSpeech/install.sh
-!models/DeepSpeech/run.sh
-models/wav2letter/
-
-corpus/europarl-parallel-corpus-19962011/
-corpus/europarl-full.csv
-
-europarl-seed2021/
-europarl-seed2022/
-europarl-seed2023/
-
 results/
 
-examples/corpus/
-examples/output/
-examples/asr_models/
+corpus/
+output/
+asr_models/
