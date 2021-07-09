@@ -1,0 +1,1 @@
+python crossasr_save_external.py config_corpus.json

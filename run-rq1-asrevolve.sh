@@ -1,1 +1,1 @@
-python asrevolve_rq1.py config_corpus_rq1.json  
+python asrevolve.py config_corpus_rq1.json  

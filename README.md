@@ -21,4 +21,17 @@ bash run-rq1-asrevolve.sh
 
 ## RQ2. Can the generated test cases be leveraged to improve the performance of CrossASR++?
 
+**Run Original CrossASR**
+
+```
+bash run-rq2-crossasr.sh
+```
+
+
+**Run ASREvolve**
+
+```
+bash run-rq2-asrevolve.sh
+```
+
 

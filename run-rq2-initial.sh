@@ -1,1 +1,0 @@
-python test_asr.py config_corpus.json
