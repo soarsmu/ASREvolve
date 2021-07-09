@@ -57,4 +57,4 @@ bash run-rq2-asrevolve.sh
 
 ## Visualisation
 
-File `experiment.ipynb` will help use make some visualization of the experiment results.
+File `experiment.ipynb` provide the way to make some visualizations of the experiment results.
