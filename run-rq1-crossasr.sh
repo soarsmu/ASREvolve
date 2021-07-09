@@ -1,0 +1,1 @@
+python crossasr.py config_corpus_rq1.json  

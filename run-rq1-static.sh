@@ -1,1 +1,0 @@
-python rq1_static.py config_corpus_rq1.json  

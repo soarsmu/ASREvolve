@@ -4,8 +4,21 @@ Due to the widespread adoption of Automatic Speech Recognition (ASR) systems in 
 
 
 
-#### RQ1. Can test cases generated through differential testing be leveraged to improve an ASR system under test?
+## RQ1. Can test cases generated through differential testing be leveraged to improve an ASR system under test?
 
-#### RQ2. Can the generated test cases be leveraged to improve the performance of CrossASR++?
+**Run Original CrossASR**
+
+```
+bash run-rq1-crossasr.sh
+```
+
+
+**Run ASREvolve**
+
+```
+bash run-rq1-asrevolve.sh
+```
+
+## RQ2. Can the generated test cases be leveraged to improve the performance of CrossASR++?
 
 
